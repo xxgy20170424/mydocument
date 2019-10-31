@@ -1,0 +1,729 @@
+丑奴儿·书博山道中壁
+
+作者：辛弃疾
+
+少年不识愁滋味，爱上层楼。爱上层楼。为赋新词强说愁。
+而今识尽愁滋味，欲说还休。欲说还休。却道天凉好个秋。
+____________________________________________________________________________________________________________________________________________________________________________________________________________________________________________
+
+
+nginx
+
+1 什么是nginx(what)
+
+轻量级的HTTP服务器
+
+7*24,支持不间断升级
+
+优化性能而开发的，注重效率，能经受高负载的考验，支持高达到5万个并发连接数
+
+
+①反向代理
+
+1.1-1什么叫正向代理
+通过游览器直接访问代理服务器来获取原服务器中的资源就叫正向代理
+
+条件：需要在游览器中配置代理服务器才能访问原服务器中的资源
+
+1.1-2什么叫反向代理
+
+我们只需要将请求发送到反向代理服务器，由反向代理服务器去选择目标服务器获取数据后，再返回给客户端(游览器)，此时反向代理服务器和目标服务器对外就是一个服务器，暴露的是代理服务器地址，隐藏了真实服务器IP地址
+
+
+条件：不需要任何配置
+
+通过反向代理服务器，根据请求分别访问多个服务器
+
+
+②负载均衡
+
+客户端发送多个请求到服务器，服务器处理请求，有一些可能要与数据库进行交互，服务器处理完毕后，再将结果返回给客户端
+
+  
+单个服务器解决不了，我们增加服务器的数量，然后将请求分发到各个服务器上，将原先请求集中到单个服务器上的情况改为将请求分发到多个服务器上，将负载分发到不同的服务器，也就是我们所说的负载均衡
+
+访问数据分开访问部署的多个服务器，数量上并尽量保持平均
+
+③动静分离
+
+为了加快网站的解析速度，可以把动态页面和静态页面由不同的服务器来解析，加快解析速度，降低原来单个服务器的压力
+
+反向代理服务器
+nginx:分开访问服务器1和服务器2
+
+服务器1
+静态资源：html、css、js
+
+服务器2
+动态资源：jsp、servlet
+
+
+
+______________________________________________________________________________________________________________________
+
+2 关于nginx的使用(where)
+
+2.1在linux中的安装(安装步骤请看最底层)
+
+下载网址：
+http://nginx.org/
+
+安装的素材：
+
+需要先安装一下依赖
+
+pcre-版本号.tar.gz
+
+openssl-版本号.tar.gz
+
+zlib-版本号.tar.gz
+
+nginx-版本号.tar.gz
+
+
+2.2常用命令
+
+前提条件进入到nginx目录下
+cd /usr/local/nginx/sbin
+
+
+查看版本号
+./nginx -v
+
+启动
+./nginx
+
+查看进程是否启动
+ps -ef | grep nginx
+
+关闭
+./nginx -s stop
+
+重新加载(当修改配置文件.conf后使用到的命令)
+./nginx -s reload
+
+
+2.3配置文件
+
+位置
+cd /usr/local/nginx/conf
+nginx.conf
+
+组成部分
+1-1
+全局块
+
+nginx服务器整体运行的配置指令
+
+worker_processes 1;
+这是nginx服务器处理服务的关键配置，worker_processes值越大，可以支持的并发处理量也越多，但是会受到硬件、软件等设备的制约
+
+
+1-2
+events块
+网络连接的配置
+
+events {
+    worker_connections  1024; #表示支持最大连接数
+}
+
+
+1-3
+http块
+可以配置全局和events
+
+http {
+    include       mime.types;
+    default_type  application/octet-stream;
+
+#中间部分
+目前监听的端口号和服务器名
+
+    server {
+        listen       80;
+        server_name  localhost;
+
+	#中中间部分
+	server可以配置多个location块
+
+        location / {
+            root   html;
+            index  index.html index.htm;
+        }
+    }
+}
+
+______________________________________________________________________________________________________________________
+
+3 核心讲解(how)
+
+3.1配置实例1-反向代理
+
+1-1效果
+
+打开游览器，在游览器中输入一个网页就跳转到linux中的tomcat主页面
+
+安装tomcat，使用默认端口8080
+
+
+启动tomcat
+./startup.sh
+
+查看日志
+cd logs/
+ls
+
+在windows访问tomcat
+
+
+1-2通过nginx反向代理访问
+
+
+第一步：在windows系统的host文件进行域名和ip对应的配置
+
+路径：c:windows/system32/drivers/etc/HOSTS文件
+
+加上linux的ip+域名
+192.168.161.95 www.123.com
+
+第二步：在nginx进行请求转发的配置（反向代理配置）
+
+找到nginx配置文件
+cd /usr/local/nginx/conf
+
+vim nginx.conf
+
+进行配置
+
+    server {
+        listen       80;
+        server_name  localhost;
+
+修改:localhost -> 192.168.161.95
+
+
+        location / {
+            root   html;
+此处添加：  proxy_pass http://127.0.0.1:8080;
+            index  index.html index.htm;
+        }
+
+127.0.0.1:8080 -> 表示tomcat真正的服务器本机地址
+
+重新加载nginx
+./nginx -s reload
+
+
+第三步：最终测试
+
+启动./nginx
+
+www.123.com
+______________________________________________________________________________________________________________________
+
+
+反向代理实例2
+
+ps -ef | grep tomcat
+
+查看tomcat进程号
+
+kill -9 进程号
+
+关闭tomcat
+
+创建两个tomcat
+
+端口号分别为8080、8081
+
+分别在两个服务器webapps中创建edu、vod
+
+加入a.html文件
+
+
+配置nginx.conf
+
+    server {
+        listen       9001;
+        server_name  192.168.161.95;
+
+        location ~ /edu/ {
+           proxy_pass http://192.168.161.95:8080;
+        }
+
+        location ~ /vod/ {
+           proxy_pass http://192.168.161.95:8081;
+        }
+    }
+
+测试
+
+
+192.168.161.95:8080/edu/a.html
+
+
+192.168.161.95:8081/vod/a.html
+
+
+
+
+
+______________________________________________________________________________________________________________________
+
+
+
+3.2配置实例2-负载均衡
+
+
+1-1效果
+
+游览器中输入
+http://192.168.161.95:8080/edu/a.html
+
+达到负载均衡效果，平均8080和8081端口中
+
+
+1-2准备
+
+两台或多台tomcat服务器
+
+8080  8081
+
+在webapps中都创建edu文件夹，并添加文件a.html
+
+
+
+1-3
+
+在nginx配置文件下配置负载均衡
+
+
+   upstream myserver {
+        server 192.168.161.95:8080;
+        server 192.168.161.95:8081;
+   }
+    server {
+        listen       80;
+        server_name  192.168.161.95;
+
+        location / {
+            proxy_pass http://myserver;
+            root   html;
+            index  index.html index.htm;
+        }
+    }
+
+
+
+测试
+http://192.168.161.95/edu/a.html
+
+会在两个服务器之间跳转
+
+
+
+负载均衡策略
+
+
+轮询(默认)
+
+
+weight权重
+
+
+ip_hash
+
+
+fair(第三方)
+
+
+
+______________________________________________________________________________________________________________________
+
+3.3配置实例3-动静分离
+
+
+动态请求：jsp、servlet
+
+
+静态请求: html、css、img、js
+
+
+Expires 很少进行修改的资源
+
+
+第一步：准备工作
+
+在linux中创建data目录，分别再建web和img，将a.html，01.jpg放入
+
+
+第二步：配置nginx
+
+    server {
+        listen       80;
+        server_name 192.168.161.95;
+
+        #charset koi8-r;
+
+        #access_log  logs/host.access.log  main;
+
+        location /web/ {
+            root   /data/;
+            index  index.html index.htm;
+        }
+
+        location /img/ {
+            root /data/;
+            autoindex on;
+        }
+
+autoindex on
+显示img当前目录下的文件
+
+第三步：测试
+
+http://192.168.161.95/web/a.html
+
+http://192.168.161.95/img/
+
+
+
+______________________________________________________________________________________________________________________
+
+3.4配置高可用集群
+
+问题：
+nginx宕机：请求就无法实现
+
+解决：
+配置高可用集群
+
+
+
+配置两台nginx服务器
+
+nginx1:主MASTER
+
+nginx2:备BACKUP
+
+辅助
+
+①中间借助一个虚拟ip
+
+②软件：keepalived
+检测nginx服务器是否还活着
+
+
+第一步：准备工作
+
+①准备两台linux的tomcat服务器
+
+②在两台服务器上分别安装nginx和keepalived
+
+③keepalived安装
+下载：
+wget http://www.keepalived.org/software/keepalived-1.2.23.tar.gz
+
+tar -zxvf keepalived-2.0.19
+___________________________________________________________
+
+④keepalived配置
+1-1配置文件路径
+keepalived-2.0.19/keepalived/etc/keepalived/keepalived.conf
+
+1-2脚本位置
+cd /usr/local/src/
+nginx_check.sh
+将此脚本文件放入目录
+___________________________________________________________
+nginx_check.sh代码：
+
+#!/bin/bash
+A=`ps -C nginx -no-header |wc -l`
+if [$A -eq  0];then
+	/usr/local/nginx/sbin/nginx
+	sleep 2
+	if [ `ps -C nginx --no-header |wc -l` -eq 0 ];then
+		killall keepalived
+	fi
+fi
+
+
+
+
+___________________________________________________________
+
+1-3配置keepalived.conf的主从服务器
+___________________________________________________________
+MASTER代码：
+
+#全局配置
+global_defs {
+   notification_email {
+     acassen@firewall.loc
+     failover@firewall.loc
+     sysadmin@firewall.loc
+   }
+   notification_email_from Alexandre.Cassen@firewall.loc
+   smtp_server 192.168.161.91
+   smtp_connect_timeout 30
+   router_id LVS_DEVEL
+}
+
+#检测脚本配置
+vrrp_script chk_http_port {
+
+	script "/usr/local/src/nginx_check.sh"
+
+	interval 2 #检测脚本执行的间隔时间
+	
+	weight 2 #权重
+}
+
+
+
+#虚拟ip配置和主机配置
+vrrp_instance VI_1 {
+    state MASTER	#主机MASTER 备机BACKUP
+    interface ens32 #网卡
+    virtual_router_id 51 #主机与备机必须一致
+    priority 100	#主机值较大，备机值较小，相当于级别，这里设置100，备机90
+    advert_int 1	#相当于服务器心跳值，为了判断是否死掉
+    authentication {
+        auth_type PASS
+        auth_pass 1111
+    }
+    virtual_ipaddress {
+        192.168.161.90 #此处为设置的访问虚拟ip地址
+    }
+}
+
+
+
+
+___________________________________________________________
+BACKUP代码：
+
+#全局配置
+global_defs {
+   notification_email {
+     acassen@firewall.loc
+     failover@firewall.loc
+     sysadmin@firewall.loc
+   }
+   notification_email_from Alexandre.Cassen@firewall.loc
+   smtp_server 192.168.161.92
+   smtp_connect_timeout 30
+   router_id LVS_DEVELBACK
+}
+
+#检测脚本配置
+vrrp_script chk_http_port {
+
+	script "/usr/local/src/nginx_check.sh"
+
+	interval 2 #检测脚本执行的间隔时间
+	
+	weight -20 #权重
+}
+
+
+
+#虚拟ip配置和主机配置
+vrrp_instance VI_1 {
+    state BACKUP	#主机MASTER 备机BACKUP
+    interface ens32 #网卡
+    virtual_router_id 51 #主机与备机必须一致
+    priority 90	#主机值较大，备机值较小，相当于级别，这里设置100，备机90
+    advert_int 1	#相当于服务器心跳值，为了判断是否死掉
+    authentication {
+        auth_type PASS
+        auth_pass 1111
+    }
+    virtual_ipaddress {
+        192.168.161.90 #此处为设置的访问虚拟ip地址
+    }
+}
+
+
+
+
+
+___________________________________________________________
+配置主机名
+vi /etc/hosts
+
+①MASTER
+192.168.161.91 LVS_DEVEL
+
+②BACKUP
+192.168.161.92 LVS_DEVELBACK
+___________________________________________________________
+keepalived.conf配置文件结构：
+
+全局
+
+脚本
+
+虚拟ip
+
+
+注意BACKUP服务器配置
+weight -20
+id 90
+
+
+
+___________________________________________________________
+
+高可用集群测试
+①启动：
+systemctl start keepalived.service
+
+②测试
+输入虚拟ip
+
+③停止MASTER服务器
+
+systemctl stop keepalived.service
+
+./nginx -s stop
+
+
+
+______________________________________________________________________________________________________________________
+
+4 原理(why)
+
+worker数和服务器的cpu数相等最为适宜
+
+4.1连接worker_connections
+
+问题1：发送请求，占用了worker的几个连接数？
+
+答案：2个或者4个
+
+情况如下:
+worker -> client
+client -> worker
+
+worker -> tomcat1
+tomcat1 -> worker
+
+
+
+问题2：nginx有一个master，有四个worker，每个worker支持最大连接数1024,支持的最大并发数是多少？
+普通的静态访问：
+worker_connections * worker_processes / 2
+
+需要反向代理，进行tomcat后台数据库操作:
+worker_connection * worker_processes / 4
+
+____________________________________________________________________________________________________________________________________________________________________________________________________________________________________________
+
+find / -name 文件名
+在根目录/下查找
+
+______________________________________________________________________________________________________________________
+nginx安装步骤
+
+pcre依赖网络下载：
+
+wget http://downloads.sourceforge.net/project/pcre/pcre/8.37/pcre-8.37.tar.gz
+
+
+第一步：创建一个新的nginx目录，并将pcre依赖导入，再解压
+
+tar -zxvf pcre-8.37.tar.gz
+
+第二步：进入到配置文件
+
+①检查
+./configure
+
+②编译安装
+make && make install
+
+③查看版本号
+pcre-config --version
+
+
+第三步：安装其他依赖 zlib 和 openssl（直接在线安装）
+yum -y install make  zlib zlib-devel gcc-c++ libtool openssl openssl-devel
+
+
+zlib
+①检查
+./configure
+
+②编译安装
+make && make install
+
+
+openssl
+
+①检查
+./config
+
+②编译安装
+make && make install
+
+
+
+第四步：导入nginx安装包并解压
+
+tar -zxvf nginx-1.17.1.tar.gz
+
+进入nginx
+①检查
+./configure
+
+②编译安装
+make && make install
+
+③进入目录下启动
+cd /usr/local/nginx/sbin
+./nginx
+开启
+./nginx -s stop
+关闭
+./nginx -s reload
+重加载
+
+④查看nginx进程
+ps -ef | grep nginx
+
+⑤进入到配置文件
+cd /usr/local/nginx/conf
+
+vi nginx.conf
+
+______________________________________________________________________________________________________________________
+systemctl disable firewalld
+防火墙开机不自启
+
+systemctl enable firewalld
+防火墙开机自启
+
+firewall-cmd --list-all
+查看开放的端口号
+
+sudo firewall-cmd --add-port=80/tcp --permanent
+设置开放的端口号
+
+sudo firewall-cmd --remove-port=3306/tcp --permanent
+关闭开放端口
+
+firewall-cmd --reload
+重启防火墙
+
+______________________________________________________________________________________________________________________
+
+
+
+
+
+
+
+
+
