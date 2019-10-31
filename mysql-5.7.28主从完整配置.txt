@@ -1,0 +1,348 @@
+
+
+丑奴儿·书博山道中壁
+
+作者：辛弃疾
+
+少年不识愁滋味，爱上层楼。爱上层楼。为赋新词强说愁。
+而今识尽愁滋味，欲说还休。欲说还休。却道天凉好个秋。
+————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————
+关于windows系统下mysql5.7.28的卸载：
+
+①打开服务
+
+②找到mysql
+
+③停止mysql
+
+④找到mysql安装目录，将其删除
+
+
+
+关于linux系统下mysql5.7.28的卸载：
+
+①删掉文件
+
+find / -name mysql
+
+
+rm -rf ...
+
+
+rm -rf /etc/my.cnf
+
+
+②查看并删除mysql用户组
+
+cat /etc/group | grep mysql
+
+cat /etc/passwd | grep mysql
+
+③查看mysql进程
+ps -ef | grep mysql
+
+通过进程一一杀掉最左端为进程
+kill -9 进程号
+...
+
+④执行删除mysql用户组
+userdel mysql
+
+——————————————————————————————————————————————————————————————————————————————————————————————————————————————————————
+
+
+1 在windows下安装mysql5.7.28
+
+1.1下载官网：mysql-5.7.28-winx64.zip
+
+https://dev.mysql.com/downloads/mysql/
+
+1.2解压安装包
+
+①将安装包放入创建的目录下：
+C:\Program Files (x95)\mysql
+
+②在C:\Program Files (x95)\mysql\mysql-5.7.28-winx64目录下
+创建一个my.ini文件，并将配置代码放入保存：
+
+注意：这里不用创建用来保存信息库的data,因为在配置文件里添加了，将会在运行代码的时候，自行创建
+
+[Client]
+port = 3306
+[mysqld]
+port = 3306
+basedir=C:\Program Files (x95)\mysql\mysql-5.7.28-winx64
+datadir=C:\Program Files (x95)\mysql\mysql-5.7.28-winx64\data
+max_connections=200
+character-set-server=utf8
+default-storage-engine=INNODB
+[mysql]
+default-character-set=utf8
+
+③打开windows的dos命令，以管理员的身份打开，进入C:\Program Files (x95)\mysql\mysql-5.7.28-winx64\bin下，输入命令：(其作用是为了初始化mysql)
+
+mysqld --initialize --user=mysql --console
+
+④初始化成功后，代码运行记录末端会有一串符号，必须用记事本记下来，即稍后登录mysql的初始化密码
+
+jtGqzdAx0w.p
+
+⑤继续输入执行安装命令/或者服务中已经存在mysql,直接手动启动开启即可：
+mysqld --install mysql
+安装成功的标识：Service successfully installed.
+
+⑥输入启动mysql命令/服务中开启后则不用再输入以下命令：
+net start mysql
+如果失败，需要在服务管理中手动启动
+
+⑦输入登录mysql命令：
+mysql -u root -p
+复制初始化密码，然后在dos窗口中点击鼠标右键即可登录
+
+⑧修改mysql登录密码：
+set password=password('密码');
+
+⑨需要配置环境变量
+
+在系统变量中创建一个MYSQL_HOME，并添加C:\Program Files (x95)\mysql\mysql-5.7.28-winx64
+
+然后将%MYSQL_HOME%\bin;配置到系统变量和用户变量path中即可
+
+
+
+——————————————————————————————————————————————————————————————————————————————————————————————————————————————————————
+2 在linux下安装mysql5.7.28
+
+2.1下载官网：mysql-5.7.28-linux-glibc2.12-x86_64.tar.gz
+
+选择Linux-Generic(即linux通用系统)
+
+https://dev.mysql.com/downloads/mysql/
+
+
+2.2将mysql-5.7.28-linux-glibc2.12-x86_64.tar.gz安装包导入linux系统/opt目录下
+
+
+2.3解压安装包
+
+①执行解压：
+tar -xzvf mysql-5.7.28-linux-glibc2.12-x86_64.tar.gz 
+
+②移动解压后的文件并重命名：
+mv mysql-5.7.28-linux-glibc2.12-x86_64 /usr/local/mysql
+
+③创建一个在mysql安装目录下的data目录:
+mkdir /usr/local/mysql/data
+
+④创建mysql用户组，并添加mysql用户，将mysql所有者改组为mysql:
+groupadd mysql
+useradd mysql -g mysql
+chown -R mysql.mysql /usr/local/mysql
+
+⑤配置
+/usr/local/mysql/bin/mysql_install_db --user=mysql --basedir=/usr/local/mysql/ --datadir=/usr/local/mysql/data
+
+⑥创建配置文件my.cnf
+vi /etc/my.cnf
+
+添加如下代码：
+
+[mysqld]
+datadir=/usr/local/mysql/data
+basedir=/usr/local/mysql
+socket=/tmp/mysql.sock
+user=mysql
+port=3306
+character-set-server=utf8
+# 取消密码验证
+skip-grant-tables
+# Disabling symbolic-links is recommended to prevent assorted security risks
+symbolic-links=0
+# skip-grant-tables
+
+[mysqld_safe]
+log-error=/var/log/mysqld.log
+pid-file=/var/run/mysqld/mysqld.pid
+
+⑦将mysql加入服务：
+cp /usr/local/mysql/support-files/mysql.server /etc/init.d/mysql
+
+设置开机自启：
+chkconfig mysql on
+
+开启mysql:(必须执行这个，不能用systemctl，否则不成功)
+service mysql start
+
+⑧登录mysql：
+/usr/local/mysql/bin/mysql -u root -p
+
+⑨进行修改密码：
+use mysql;
+
+update user set authentication_string=password('密码') where user='root';
+
+flush privileges;
+
+quit(退出)
+
+用"#" my.cnf中的skip-grant-tables
+
+vi /etc/my.cnf
+
+⑩远程配置
+
+/usr/local/mysql/bin/mysql -u root -p
+
+alter user 'root'@'localhost' identified by '密码';
+
+quit
+
+/usr/local/mysql/bin/mysql -u root -p
+
+use mysql;
+
+update user set host='%' where user='root';
+
+flush privileges;
+
+quit
+
+软连接:配置后，就可以直接使用mysql进行登录，登录时就不再需要前面加上/usr/local/mysql/bin/
+ln -s /usr/local/mysql/bin/mysql /usr/bin
+
+——————————————————————————————————————————————————————————————————————————————————————————————————————————————————————
+
+3 主从配置
+
+①在linux虚拟机里访问windows中的mysql
+mysql -uroot -proot -h(windows中的ip) -P3306
+
+注意：此时会显示Access...报错
+
+解决：windows主机mysql下执行语句
+
+grant all privileges on *.* to root@'%' identified by 'root';
+②结果可能会报错：应该执行一下语句，然后再执行
+
+select version(),
+@@sql_mode;SET sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''));
+
+flush privileges;
+
+然后进入windows中mysql数据库的mysql库user表
+
+将host=%,user=root的行找到Grant_priv将N改为Y
+
+
+③然后再次执行：
+在linux虚拟机里访问windows中的mysql
+mysql -uroot -proot -h192.168.161.95 -P3306
+
+成功后执行下一步：
+
+再windows中的mysql目录下my.ini文件中[mysqld]下添加如下代码
+
+# 主服务器唯一ID
+server-id=1
+# 启用二进制日志，路径中不要有中文和空格
+log-bin=C:\Program Files (x95)\mysql\mysql-5.7.28-winx64\logbin
+# 可选，出错日志。出错之后可查看
+log-error=C:\Program Files (x95)\mysql\mysql-5.7.28-winx64\log
+# 设置不要复制的数据库
+binlog-ignore-db=mysql
+# 设置需要复制的数据库
+binlog-do-db=mydb2
+# 设置logbin格式，默认就是statement
+binlog_format=STATEMENT
+
+
+
+在linux中配置
+
+vi /etc/my.cnf
+
+再[mysqld]下添加代码：
+
+#=====================================
+#新添内容：
+server-id=2
+relay-log=mysql-relay
+#=====================================
+
+在windows中的mysql执行以下语句：
+注意：以下代码是本人经过百次实验得出的才能得到最终的File和Position结果，太他妈兴奋了！！！！！！！！！！！！！
+
+以下是出现的数次错误
+
+
+[Err] 1055 - Expression #1 of ORDER BY clause is not in GROUP BY clause and contains nonaggregated column 'information_schema.PROFILING.SEQ' which is not functionally dependent on columns in GROUP BY clause; this is incompatible with sql_mode=only_full_group_by
+
+
+
+——————————————————————————————————————————————————————————————————————————————————————————————————————————————————————
+select version(),
+@@sql_mode;SET sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''));
+
+grant replication slave on *.* to 'slave01'@'%' identified by '123456';
+
+flush privileges;
+
+show master status;
+
+——————————————————————————————————————————————————————————————————————————————————————————————————————————————————————
+
+记录下File和Position结果
+
+logbin.000001
+
+584
+
+在linux的mysql中执行下面语句：
+
+先重启一下mysql
+service mysql restart
+
+
+CHANGE MASTER TO 
+ master_host = '192.168.17.67',
+ master_port = 3306,
+ master_user = 'slave01',
+ master_password = '123456',
+ master_log_file = 'logbin.000001',
+ master_log_pos = 154;
+
+启动同步：
+start slave
+
+查看同步状态：
+
+show slave status\G;
+
+检查:
+Slave_IO_Running和Slave_SQL_Running是否都为Yes,如果为
+No/Connection，只要有一个这样说明安装失败
+
+
+一般情况不会失败，失败后重新操作：
+stop slave;
+reset master;
+
+最后创建mydb2即为同步数据库
+
+
+——————————————————————————————————————————————————————————————————————————————————————————————————————————————————————
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
