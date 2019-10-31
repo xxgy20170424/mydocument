@@ -1,0 +1,731 @@
+
+丑奴儿·书博山道中壁
+
+作者：辛弃疾
+
+少年不识愁滋味，爱上层楼。爱上层楼。为赋新词强说愁。
+而今识尽愁滋味，欲说还休。欲说还休。却道天凉好个秋。
+____________________________________________________________________________________________________________________________________________________________________________________________________________________________________________
+
+Linux
+
+history	查看命令历史记录
+history -c 清空所以命令历史记录
+Ctrl+l 快捷键清屏
+clear	linux主界面清屏命令
+system clear mysql主界面清屏命令
+	
+systemctl status name 查看状态
+____________________________________________________________________________________________________________________________________________________________________________________________________________________________________________
+Mysql
+
+1 定义
+
+①什么是数据库：
+四个字——增删改查
+
+②常用的数据库软件：
+Oracle
+DB2
+MySQL
+其他：SQLServer、Sybase
+
+
+③安装与卸载：
+mysql -uroot -proot
+测试Mysql是否安装成功
+
+stop mysql
+停止mysql服务
+
+start mysql
+启动mysql服务
+
+④注意：
+一个数据库软件，维护和管理着多个数据库
+一个数据库中，管理和维护着多张表
+一个类，对应一个数据库表
+类中的属性和数据库表的列相对应
+竖叫列，行叫记录
+
+___________________________________________________________
+2 SQL语句
+
+1)定义：
+①非过程性的语言，每条SQL语句执行完都会有具体的结果
+②操作数据库-->数据表-->数据表中的数据记录
+③存取关系数据库的语言,具有查询/操纵/定义和控制关系型数据库
+④mysql注释
+--和 #
+单行注释
+/**/
+多行注释
+⑤快捷注释——Ctrl+Shift+c
+
+2)SQL语句分类：
+
+DDL：数据定义问题
+数据定义语言 - Data Definition Language
+用来定义数据库的对象，如数据表、视图、索引等
+
+DML(重点)：数据操纵问题
+数据处理语言 - Data Manipulation Language
+在数据库表中更新，增加和删除记录
+如 update， insert， delete
+
+DQL(重点)：数据查询问题
+数据查询语言 – Data Query Language
+select
+
+DCL：数据控制问题
+数据控制语言 – Data Control Language
+指用于设置用户权限和控制事务语句
+如grant，revoke，if…else，while，begin transaction
+
+
+3)mysql的数据类型:
+
+①基本型
+decimal
+专门用来存储跟钱相关的数据，它不会有精度丢失
+
+decimal(11,2 )
+11表示一共有11个长度的数值
+2表示其中有两个小数位
+
+varchar(长度)
+表示变长,当添加的数据不足存储的数据长度,这时会把多余的取消
+
+char(长度)
+表示定长,
+当添加的数据不足存储的数据长度,
+它会把存储的数据添加到存储的长度
+如果存储的长度超出了列表中的长度，存储会报错
+
+②数值型
+Java中：byte、short 、 int 、 long 、float、 double
+mysql中：tinyint 、smallint、int、bigint、FLOAT、DOUBLE
+在创建数据表的时候，数值型也有自己的长度，一般使用默认
+
+③逻辑型：
+Java中：boolean
+mysql中：BIT
+
+④日期型：
+Java中：Date、Time、DateTime、TimeStamp
+mysql中：DATE、TIME、DATETIME、TIMESTAMP
+ 
+timestamp和datetime都可以保存年月日时分秒，
+但是timestamp它在保存数据的时候表中的这一列会自动的变成
+当前保存数据时的时间。
+
+⑤字符串型：
+Java中：
+InputStream
+字节流
+Reader
+字符流
+
+Mysql中：
+BLOB 
+保存的字节数据
+TEXT 
+保存字符数据
+
+
+
+4)单表的约束：
+
+①主键约束：表示该列下的数据值，不能重复，只能有唯一的一个
+
+列名 列的类型 primary key;
+
+
+
+②唯一约束：该列（字段）的值不允许重复。
+一张表中可以有很多个唯一约束，只能有一个(两个)作为主键约束，即就是在一张表唯一约束的列可以有多列，但是主键一般只会使用一列或者两列（联合主键）。
+
+列名 列的类型（长度）unique;
+
+
+
+③非空约束：该字段的值不能为空
+
+列名 列的类型（长度） not null;
+
+
+④default默认约束：一般这个列,如果插入的时候,不给它赋值,则列的值是默认值,如果表的主键是int 类型,这时可以在主键的后面添auto_increment 这时表中这一列在添加数据的时候，会自动的增长。
+
+auto_increment;
+
+
+-- 创建一个正规的符合约束标准的表
+create table t_person(
+	`id` int primary key auto_increment,
+	`name` varchar(50) not null,
+	`password` varchar(32) not null,
+	`sex` varchar(2),
+	`date` date default '1999-12-31'
+);
+-- 查看表结构
+desc t_person;
+-- 修改列名称
+alter table t_person change `date` `birthday` date default '1999-12-31';
+-- 原模式的写法
+insert into t_person(`id`,`name`,`password`,`sex`,`birthday`) values(1,'zhangsan','123456','man','2010-01-01');
+-- 由于id属于主键约束并且自增，则不用写，birthday为默认约束，则也不用写
+insert into t_person(`name`,`password`,`sex`) values('lisi','123456','man');
+insert into t_person(`name`,`password`,`sex`) values('zhaoliu','123456','man');
+insert into t_person(`name`,`password`,`sex`) values('wangwu','123456','man');
+insert into t_person(`name`,`password`,`sex`) values('sunzi','123456','man');
+___________________________________________________________
+5)操作:
+
+①基本操作：
+
+-- 查询所有数据库
+show databases;
+-- 创建一个数据库
+create database mydb1; 
+-- 删除一个数据库 
+drop database mydb1;
+-- 切换数据库
+use mysql;
+-- 查询当前正在使用的数据库
+select DATABASE();
+
+
+②数据库表的创建:
+``——键盘左上角的符号
+表示列表与关键字重名时加这个符号
+
+举例：
+create table t_user(
+	`id` int primary key auto_increment,
+	`name` varchar(50) not null,
+	`password` varchar(32) not null,
+	`sex` varchar(2),
+	`date` date default '1999-12-31'
+);
+
+-- 查看表结构
+desc t_user;
+
+③数据库表的修改：
+-- 增加列：add
+-- alter table 表名 add `列名` 类型(长度); 
+alter table t_user add `salary` decimal(11,2); 
+
+-- 修改列类型、长度和约束：modify
+-- alter table 表名 modify 列名 类型(长度) 约束;
+alter table t_user modify `birthday` date not null;
+alter table t_user modify `name` varchar(80);
+
+-- 修改列名：change
+-- alter table 表名 change 旧列名 新列名 类型(长度) 约束;
+alter table t_user change `name` `username` varchar(50) not null;
+
+-- 删除列：drop
+-- alter table 表名 drop 列名 ;
+alter table t_user drop `sex`;
+
+-- 修改表名： rename to
+-- alter table 旧表名 rename  to 新表名;
+alter table t_user rename to t_person;
+
+-- 数据库表删除：drop
+-- drop table 表名;
+drop table t_user;
+
+-- 查看库中有多少张表：show
+show tables;
+
+-- 查看表数据结构：desc
+-- desc 表名;
+desc t_user;
+desc t_person;
+
+-- 查看表定义：show create
+-- show create table 表名;
+show create table t_person;
+show create table t_user;
+
+
+④数据库表的数据操作：
+
+Create/Read/Update/Delete——CRUD（增删改查）
+
+
+___________________________________________________________
+-- 增：insert
+
+/*
+数据中字符串和日期值需要用''引用起来
+数据插入的时候，某些列可以为null
+自动增长的列，可以不写 
+默认值的列，可以不写
+*/
+
+-- insert into 表名(列名1,...,列名n) values(数据1,...,数据n);
+
+insert into t_person(`name`,`password`,`sex`) values('lisi','123456','man');
+insert into t_person(`name`,`password`,`sex`) values('zhaoliu','123456','man');
+insert into t_person(`name`,`password`,`sex`) values('wangwu','123456','man');
+insert into t_person(`name`,`password`,`sex`) values('sunzi','123456','man');
+___________________________________________________________
+
+-- 删：drop/delete/trancate
+
+/*
+drop：从数据库中删除表
+delete：从表中删除数据
+trancate：从表中删除数据，并保持原表模型
+
+delete语句和truncate的区别：
+第一点
+delete语句可以加where语句
+truncate语句不能加where语句
+第二点
+delete语句是在原表上做删除操作
+truncate语句是把原表删除之后再创建一个一模一样的空表
+第三点
+delete语句，自增的列auto_increment,会从断点处开始继续插入 ,
+而truncate语句不会，而是从头开始
+*/
+
+
+-- delete from 表名 where `列名` = '数据';
+
+create table t_student(
+	`id` int primary key auto_increment,
+	`name` varchar(50) not null,
+	`password` varchar(32) not null,
+	`sex` varchar(2),
+	`date` date default '1999-12-31'
+);
+
+-- 从数据库中删除此表
+drop table t_student;
+-- 删除此表中的所有数据
+delete from t_student;
+-- 删除此表中的所有数据，并保持原有模型
+truncate table t_person;
+
+-- 通过条件删除表中的数据
+delete from t_person where `username` = '小刚';
+
+___________________________________________________________
+
+-- 改：update
+
+/*
+注意：
+一般在修改数据表中的数据时，都需要加条件，而不能直接修改
+表中的某一列的所有值。
+*/
+
+-- update 表名 set `列名` = '修改数据';
+update t_person set `sex` = '男';
+
+-- 条件修改：update 表名 set `列名` = '修改数据' where `列名` = '数据';
+update t_person set `password` = 'abc123' where `id` = 3;
+
+update t_person set `name` = 'xiaohua',`sex` = '女',`password` = 'abc123',`birthday` = '2011-11-11' where `id` = 1;
+
+___________________________________________________________
+
+-- 查：select
+
+-- 查询常量
+select 100;
+select 'tom';
+select '姓名';
+
+-- 查询表达式
+select 100*100;
+select 12344%10;
+select 55/5;
+select 44-2;
+
+-- 查看表内容
+select * from t_book;
+
+-- 查询函数:
+-- 查看当前数据库版本
+select VERSION();
+-- 查看当前时间
+select NOW();
+-- 查看当前正在使用的数据库
+select database();
+-- 查所有表
+show tables;
+-- 查所有数据库
+show databases;
+-- 求行数
+select COUNT(*) from t_book;
+select COUNT(`author`) from t_book;
+select COUNT(`name`) from t_book;
+-- 求某列的总和
+select SUM(`sales`) from t_book;
+select SUM(`stock`) from t_book;
+-- 求某列的平均值
+select avg(`price`) from t_book;
+-- 求某列的最大值
+select MAX(`price`) from t_book;
+-- 求某列的最小值
+select MIN(`price`) from t_book;	
+	
+
+-- 查询列
+-- select 列名, 列名 from 表名;
+select `name`,`author`,`publishing` from t_book; 
+
+-- 混合查询
+-- select 列名, 常量, 表达式, 函数 from 表名;
+select `name`,10000,5*5,avg(`price`) from t_book;
+
+-- 查询加别名
+-- select 列名 as 别名, 列名 as 别名 from 表名;//也可不带as关键字	
+-- select 列名 别名  from 表名;
+select `name` as `书名`,`price` as `价格` from t_book;
+select `id` `编号`,`name` `书籍名称`,`publishing` `出版社` from t_book;
+
+-- 查询全部列
+-- select*from 表名;
+select*from t_book;
+
+-- 查询去重（去掉重复的记录）
+-- select distinct `列名1`,`列名2`,...from 表名;
+select distinct `name`,`author` from t_book;
+select distinct `publishing`,`author` from t_book;
+
+-- 条件查询
+-- select 列名 from 表名 where 条件;
+-- select*from 表名 where 条件;
+
+-- 关系条件: 大于>小于<大于等于>=小于等于<=等于=不等于<>
+-- select 列名 from 表名 where `列名` 关系条件 数值;
+select `price` `价格大于50` from t_book where `price` > 50;
+
+-- 逻辑条件: 与and 、或or
+-- select*from 表名 where`列名`='数据值' 逻辑条件 `列名`='数据值';
+select*from t_book where `price` =  16 and `sales` = 5;
+select*from t_book where `price` < 50  and `stock` > 50;
+
+-- 模糊查询
+-- select*from 表名 where `列名`  like '%内容%';
+-- %表示前或后为任意值
+-- _表示一个字符，有几个代表几个字符
+select*from t_book where `name` like '%鸡蛋%';
+select*from t_book where `publishing` like '%__交_%';
+
+-- 做区间查询
+-- select*from 表名 where `含具体数学数据的列名` between 数值  and  数值;
+select*from t_book where `price` between 16 and 45;
+
+-- 查询等于其中任意一个值 
+-- select*from 表名 where `列名` in (值1, 值2,...,值n);
+select*from t_book where `stock` in(50,16);
+
+-- 判断是否为空
+-- select*from 表名 where `列名` is null;
+select*from t_book where `name` is null;
+
+-- 查询排序
+-- select*from 表名  order by `列名` asc;   ##升序（默认值）
+-- select*from 表名  order by `列名` desc;  ##降序
+select*from t_book order by `price` asc;
+select*from t_book order by `price` desc;
+
+-- 分页查询
+-- select*from 表名  order by `列名`  desc limit beginIndex,size;
+-- beginIndex = (pageNo当前页 - 1)*每页数量
+select*from t_book order by `price` desc limit 0,3;
+
+-- 分组统计查询
+-- 分组统计就是将需要的数据分成组，然后根据需要统计函数的总和
+-- 注意：单纯的分组没有任何意义，分组的意义在于统计
+
+-- 简单分组
+-- select*from 表名 group by `列名`;
+select*from t_book group by `price`;
+
+-- 分组统计
+-- select  count(*),`列名1` from 表名 group by `列名1`;
+select COUNT(*),`publishing` from t_book group by `publishing`;
+
+-- 过滤分组
+-- select 函数,`列名1` from 表名  group by `列名1` having 函数 关系条件 数值;
+select avg(price),`publishing` from t_book group by `publishing` having avg(price) <= 50;
+
+-- 表的复制
+-- create table 新表名 like 旧表名;   ##复制空表
+-- create table 新表名 select*from 旧表名;   ##复制表及全部内容
+create table t_book1 like t_book;
+create table t_book2 select*from t_book;
+
+
+查询语句执行顺序：
+select		列名，分组统计函数 	……⑤
+from		表名			……①
+where 		条件			……②
+group by	分组字段		……③
+having		分组筛选条件		……④
+order by	列名			……⑥
+
+___________________________________________________________
+/*
+创建一张表，用于查询使用
+*/
+
+##创建图书表
+create table t_book(
+	`id` int(11), 							## 主键
+	`name` varchar(50) ,						## 书名 
+	`author` varchar(50) ,						## 作者
+	`price` decimal(11,2) ,						## 价格
+	`sales` int(11) ,						## 销量
+	`stock` int(11) ,						## 库存
+	`publishing` varchar(200)					## 出版社
+);
+
+## 插入初始化测试数据
+insert into t_book(`id` , `name` , `author` , `price` , `sales` , `stock` , `publishing` ) 
+values(1, 'java从入门到放弃' , '国哥' , 80 , 100 , 0 , '北京大学' );
+
+insert into t_book(`id` , `name` , `author` , `price` , `sales` , `stock` , `publishing` ) 
+values(2, '数据结构与算法' , '国哥' , 78 , 87 , 13 , '上海交大' );
+
+insert into t_book(`id` , `name` , `author` , `price` , `sales` , `stock` , `publishing` ) 
+values(3, '怎样拐跑别人的媳妇' , '国哥' , 68, 0 , 100 , '清华大学' );
+
+insert into t_book(`id` , `name` , `author` , `price` , `sales` , `stock` , `publishing` ) 
+values(4, '木虚肉盖饭' , '小胖' , 16, 50 , 50 , '上海交大' );
+
+insert into t_book(`id` , `name` , `author` , `price` , `sales` , `stock` , `publishing` ) 
+values(5, '木虚肉盖饭' , '小胖' , 16, 50 , 50 , '北京大学' );
+
+insert into t_book(`id` , `name` , `author` , `price` , `sales` , `stock` , `publishing` ) 
+values(6, null , '刚哥' , 45 , 5 , 95 , '清华大学' );
+
+insert into t_book(`id` , `name` , `author` , `price` , `sales` , `stock` , `publishing` ) 
+values(7, '番茄炒鸡蛋' , '刚哥' , 16 , 5 , 95 , '清华大学' );
+
+insert into t_book(`id` , `name` , `author` , `price` , `sales` , `stock` , `publishing` ) 
+values(8, '木须肉盖饭' , '刚哥' , 16 , 5 , 95 , '清华大学' );
+
+insert into t_book(`id` , `name` , `author` , `price` , `sales` , `stock` , `publishing` ) 
+values(9, null , '刚哥' , 45 , 5 , 16 , '清华大学' );
+
+-- 查看表内容
+select * from t_book;
+
+___________________________________________________________
+
+6)多表
+
+定义：
+随着项目的越来越大，需要保存的数据也越来越多，我们一般不会把所有数据都保存到一张表当中，而是根据数据的关系拆分到多张表中来保存所有数据。而这个时候表和表之间就会产生一定有关系。
+
+
+-- 多表查询
+
+-- 在多表中添加关系列
+-- 一对多数据表
+-- 创建班级表——锁表
+create table t_clazz(
+	`id` int primary key auto_increment,
+	`name` varchar(50)
+);
+
+-- 插入班级信息
+insert into t_clazz(`name`) values('javaEE_20170228');
+insert into t_clazz(`name`) values('HTML5_20170325');
+insert into t_clazz(`name`) values('大数据_20170420');
+insert into t_clazz(`name`) values('python_20170515');
+
+select*from t_clazz;
+
+-- 创建学生表——钥匙表
+create table t_student(
+	`id` int primary key auto_increment,
+	`name` varchar(50),
+	`clazz_id` int
+);
+
+-- 插入班级信息
+insert into t_student(`name`,`clazz_id`) values('stu0228_1',1);
+insert into t_student(`name`,`clazz_id`) values('stu0228_2',1);
+insert into t_student(`name`,`clazz_id`) values('stu0228_3',1);
+insert into t_student(`name`,`clazz_id`) values('stu0325_1',2);
+insert into t_student(`name`,`clazz_id`) values('stu0325_2',2);
+insert into t_student(`name`,`clazz_id`) values('stu0420_1',3);
+
+select*from t_student;
+
+
+-- 笛卡尔积
+select*from t_clazz,t_student;
+
+-- 一般是在一个专门的关系表中添加关系列
+
+-- 多表关联查询
+
+/*
+格式:
+select
+           `列名1`,`列名2`
+   from
+           表1，表2
+    where 
+            等值条件;
+*/
+-- 锁表与钥匙表关联
+select
+	*
+from 
+	t_clazz,t_student 
+where 
+	t_clazz.id = t_student.clazz_id;        
+-- 锁表与钥匙表选择性的关联
+select
+	t_clazz.*,
+	t_student.name
+from 
+	t_clazz,t_student 
+where 
+	t_clazz.id = t_student.clazz_id;
+
+-- 多表内连接查询
+/*
+格式:
+select
+	列名1,列名2
+from 
+	表1 join 表2
+on 
+	关联条件
+where
+	查询条件;
+*/
+-- 内连接查询
+select
+	*
+from
+	t_clazz join t_student
+on
+	t_clazz.id = t_student.clazz_id
+where
+	t_clazz.name = 'javaEE_20170228';
+-- 选择性内连接查询
+select
+	t_clazz.*,
+	t_student.name
+from
+	t_clazz join t_student
+on
+	t_clazz.id = t_student.clazz_id
+where
+	t_clazz.name = 'javaEE_20170228';
+
+-- 多表外连接查询
+/*
+格式：
+select 
+	列名1，列名2
+from
+	表1 left/right(outer可省略) join 表2
+on	
+	关联条件
+where
+	查询条件;
+*/
+
+select
+	*
+from
+	t_clazz left join t_student
+on
+	t_student.clazz_id = t_clazz.id
+where
+	t_clazz.name = 'python_20170515';
+
+
+
+-- 单行子查询
+-- 就是把一个查询的结果当成为查询条件使用（或表使用）
+-- 格式：
+-- select *from 表名  where `列名`  关系条件 (第一步函数语句);
+
+-- 1 查出t_book中价格最高的书
+-- 第一步，通过函数查出书本价格最高值
+select MAX(`price`) from t_book; 
+-- 第二步，将第一步带入，查出此书信息
+select*from t_book where `price` = (
+	select MAX(`price`) from t_book
+);
+
+-- 2 查出高于书籍平均价格的所以书
+-- 第一步，通过函数查出书本平均价格
+select avg(`price`) from t_book;
+-- 第二步，将第一步带入，查出高于平均价格的所以书
+select*from t_book where `price` > (
+	select avg(`price`) from t_book
+);
+
+ 
+-- 多行子查询
+-- in (  ):查询条件在in值范围的记录
+-- select *from 表名  where `列名` in(第一步函数语句);
+
+-- 第一步，先通过书名（java从入门到放弃和数据结构与算法）查到你喜欢的出版社
+select publishing from t_book where `name` = 'java从入门到放弃' or `name` = '木须肉盖饭';
+-- 通过出版社信息，查询全部的图书来查找你需要的书
+select*from t_book where publishing in (
+	select publishing from t_book where `name` = 'java从入门到放弃' or `name` = '木须肉盖饭'
+);
+
+-- not in (  ):查询条件不在in范围的记录
+-- select *from 表名  where `列名` not in(第一步函数语句);
+
+-- any语句:表示只要子查询中任何一个成立，就通过查询
+-- select *from 表名  where `列名` 关系条件 any(第一步函数语句);
+
+-- all语句:表示所有子查询中的都成立，才通过查询
+-- select *from 表名  where `列名` 关系条件 all(第一步函数语句);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

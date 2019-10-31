@@ -1,0 +1,497 @@
+
+丑奴儿·书博山道中壁
+
+作者：辛弃疾
+
+少年不识愁滋味，爱上层楼。爱上层楼。为赋新词强说愁。
+而今识尽愁滋味，欲说还休。欲说还休。却道天凉好个秋。
+____________________________________________________________________________________________________________________________________________________________________________________________________________________________________________
+
+JDBC
+
+目前市面上比较常用的数据库：
+Mysql
+DB2
+Oracle
+...
+
+1 概述 
+JDBC全称为java database connectivity。
+是sun公司指定的java数据库连接技术的简称。
+
+______________________________________________________________________________________________________________________
+
+2 作用
+可以屏蔽java语言操作数据库时，由于不同数据库所产生的代码差异。
+
+流程图如下：
+java用户/java应用程序->JDBC编程接口->其他各种数据库驱动
+
+______________________________________________________________________________________________________________________
+
+3 java中编写JDBC常用的类
+
+①注册JDBC驱动。用于管理连接
+java.sql.DriverManager
+
+②数据库链接，它负责把sql语句发送给服务器
+java.sql.Connection
+
+③用来执行静态的sql语句
+java.sql.Statement
+
+④预编译的Statement.它可以解决sql注入安全的问题
+java.sql.PreparedStatement
+
+⑤结果集是一张虚拟表（是通过执行select查询得到）
+java.sql.ResultSet
+
+______________________________________________________________________________________________________________________
+
+4 编写JDBC程序，实现程序与数据库的连接
+
+4.1简单的编写方式步骤如下：
+
+//先导入jdbc配置包
+
+
+//第一步：注册一个jdbc驱动DriverManager
+DriverManager.registerDriver(new Driver());
+
+//第二步：创建数据库连接Connection,地址-用户名-密码
+Connection connection = DriverManager.getConnection(地址,用户名,密码);
+
+//第三步：创建实现类Statement，用来执行sql语句
+Statement statement = connection.createStatement();
+String sql = "sql语句";
+
+//第四步：执行完查询返回结果集，ResultSet
+//executeQuery方法用来执行select查询语句
+ResultSet resultSet = statement.executeQuery(sql);
+
+//第五步：遍历ResultSet结果集，获取其中每一列的数据
+while(resultSet.next()){
+	//System.out.println(resultSet.get包装类(列名));
+	//注意：需要单独创建一个关于列名的实现类
+}
+
+//第六步：关闭所以资源
+resultSet.close();
+statement.close();
+connection.close();
+
+4.2数据库URL地址的写法：
+Oracle写法：
+jdbc:oracle:thin:@localhost:1521:表名
+
+MySql写法：
+jdbc:mysql://localhost:3306/表名
+
+4.3JDBC方式实现CRUD
+
+executeQuery(语句);
+用于查询语句
+
+executeUpdate(语句);
+用于插入/删除/更新语句
+
+//第一步：注册驱动
+Class.forName("com.mysql.jdbc.Driver");
+
+//第二步：获取连接
+Connection connection = DriverManager.getConnection(
+地址,用户名,密码);
+
+//第三步：创建实现类
+Statement statement = connection.createStatement();
+
+//第四步：编写sql语句
+String sql = "sql语句";
+
+//第五步：执行语句，①查询需要返回结果集;②其他直接执行
+
+//select
+ResultSet resultSet = statement.executeQuery(sql);
+.next()
+.getXxx()
+
+//insert、delete、update
+int count = statement.executeUpdate(sql);
+
+//第六步：关闭资源
+resultSet.close();
+statement.close();
+connection.close();
+
+
+4.4关于注入安全性问题
+
+//创建一个预编译的Statement对象
+PreparedStatement preparedStatement = connection.prepareStatement(sql);
+
+//通过setString()方法给出占位符——?的参数值
+preparedStatement.setString(?1,?名);
+preparedStatement.setString(?2,?名);
+...
+
+//执行并返回结果集
+ResultSet resultSet = preparedStatement.executeQuery();
+...
+
+4.5标准规范jdbc的写法
+
+// 调用注册驱动
+Class.forName("com.mysql.jdbc.Driver");
+
+// 创建连接
+Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/mydb","root","root");
+
+// 编写sql语句
+String sql = "CRUD";
+
+// 创建一个预编译
+PreparedStatement preparedStatement = connection.prepareStatement(sql);
+
+// 添加数据
+preparedStatement.set包装类型(1,数据);
+...
+
+// 执行语句
+preparedStatement.executeUpdate/Query();
+
+// 关闭资源
+.close();
+
+
+______________________________________________________________________________________________________________________
+
+5 数据库事务
+
+5.1什么是事务：
+①在人员管理系统中，你删除一个人员，你即需要删除人员的基本资料，也要删除和该人员相关的信息，如信箱，文章等等，这样，这些数据库操作语句就构成一个事务！
+
+②N个操作，一次性，要么都成功。要么都失败！！！
+
+5.2事务的满足的4个必要条件(！！！缺一不可)：
+①原子性（Atomicity）：一组事务，不可分割，要么成功/失败
+②一致性（Consistency）：事务执行后，数据库状态与其他业务规则保持一致。如转账业务，无论事务执行成功否，参与转账的两个账号余额之和应该是不变的。
+③隔离性（Isolation）：事务独立运行。一个事务处理后的结果，影响了其他事务，那么其他事务会撤回。事务的100%隔离，需要牺牲速度。
+④持久性（Durability）：事务完成后，所有操作就会写入到数据库中。
+
+
+5.3事务程序测试编写：
+
+
+		Class.forName("com.mysql.jdbc.Driver");
+
+		Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/mybox1", "root", "root");
+		PreparedStatement prepareStatement1 = null;
+		PreparedStatement prepareStatement2 = null;
+
+		try {
+			connection.setAutoCommit(false); // 设置手动管理事务
+
+			// 先让a账号减500
+			String sql = "update t_person set `salary` = `salary`-500 where id = ?";
+			prepareStatement1 = connection.prepareStatement(sql);
+			prepareStatement1.setInt(1, 1);
+			prepareStatement1.executeUpdate();
+
+			// 故意产生的异常
+//			int i = 12 / 0;
+
+			// 再让b账号加500
+			String sql2 = "update t_person set `salary` = `salary`+500 where id = ?";
+			prepareStatement2 = connection.prepareStatement(sql2);
+			prepareStatement2.setInt(1, 2);
+			prepareStatement2.executeUpdate();
+
+			connection.commit();// 提交事务
+
+		} catch (Exception e) {
+
+			connection.rollback(); // 回滚事务
+
+		} finally {
+			// 释放 资源
+			if (prepareStatement1 != null) {
+				prepareStatement1.close();
+			}
+			// 释放 资源
+			if (prepareStatement2 != null) {
+				prepareStatement2.close();
+			}
+			if (connection != null) {
+				connection.close();
+			}
+		}
+
+	}
+
+
+______________________________________________________________________________________________________________________
+
+6 数据库连接池
+
+6.1常见的集中数据库连接池：
+
+①DBCP（DataBase Connection Pool）数据库连接池，是Java数据库连接池的一种，由Apache开发，通过数据库连接池，可以让程序自动管理数据库连接的释放和断开。
+
+②C3P0是一个开源的JDBC连接池，它实现了数据源和JNDI绑定，支持JDBC3规范和JDBC2的标准扩展。目前使用它的开源项目有Hibernate，Spring等。
+
+③Druid（德鲁伊）是一个拥有大数据实时查询和分析的高容错、高性能开源分布式系统，旨在快速处理大规模的数据，并能够实现快速查询和分析。尤其是当发生代码部署、机器故障以及其他产品系统遇到宕机等情况时，Druid仍然能够保持100%正常运行。
+
+
+
+6.2数据库连接池的说明：
+
+在整个jdbc访问数据库的过程中，耗时最长的操作，就是建立数据库连接（Connection对象）。
+在访问数据库之前，先创建好大量的连接对象，保存到一个（保存数据库的池）集合中。
+每次访问数据库的时候，都从集合中获取一个连接对象。
+当使用完成之后。再把连接对象放回到（数据库连接的池）集合中。
+每一个数据库连接对象就可以得到充分地复用。并且在连接的时候，不需要等待数据库连接的建立时间。
+
+
+6.3数据库连接池的好处：
+数据库连接池，是一种优化数据库访问速度的技术。
+
+在整个jdbc访问数据库的过程中，耗时最长的操作，就是建立数据库连接（Connection对象）。
+在访问数据库之前，先创建好大量的连接对象，保存到一个（保存数据库的池）集合中。
+每次访问数据库的时候，都从集合中获取一个连接对象。
+当使用完成之后。再把连接对象放回到（数据库连接的池）集合中。
+每一个数据库连接对象就可以得到充分地复用。并且在连接的时候，不需要等待数据库连接的建立时间。
+
+从而大大地提高数据库访问的速度（效率）
+
+
+
+6.4数据库druid创建方式
+
+	@Test
+	public void test1() throws Exception {
+		// 创建了一个数据库连接池
+		DruidDataSource dataSource = new DruidDataSource();
+		// 设置连接的url地址
+		dataSource.setUrl("jdbc:mysql://localhost:3306/mybox1");
+		// 设置数据库连接的用户名
+		dataSource.setUsername("root");
+		// 设置数据库连接的密码
+		dataSource.setPassword("root");
+		// 设置数据库驱动的类名
+		dataSource.setDriverClassName("com.mysql.jdbc.Driver");
+		// 设置数据库连接池使用完后，第一次初始化多少个连接对象
+		dataSource.setInitialSize(3);
+		// 设置数据库连接池中一共只能创建多少个。
+		dataSource.setMaxActive(10);
+
+		// 从数据库连接池中获取一个连接
+		System.out.println(dataSource.getConnection());
+	}
+___________________________________________________________
+
+//创建一个源文件
+
+config-jdbc.properties
+
+//配置源文件jdbc.properties
+url=jdbc:mysql://localhost:3306/mybox1
+username=root
+password=root
+driverClassName=com.mysql.jdbc.Driver
+initialSize=3
+maxActive=10
+
+
+//导入alibaba的druid(德鲁伊)数据库文件配置包
+
+
+//测试编写
+
+	@Test
+	public void test2() throws Exception {
+		
+		// Properties是键值对
+		// 创建一个键值对，对象（它里面有多组键值对）
+		Properties properties = new Properties();
+
+		InputStream is = DruidTest.class.getClassLoader()
+				.getResourceAsStream("jdbc.properties");
+		// load方法通过使用properties属性配置文件的输入流对象
+		properties.load(is);
+		is.close();
+
+		// 使用德鲁伊数据库连接池工厂类
+		DataSource dataSource = DruidDataSourceFactory
+				.createDataSource(properties);
+
+		for (int i = 0; i < 100000; i++) {
+			Connection connection = dataSource.getConnection();
+			System.out.println(connection);
+			connection.close();
+		}
+		
+		// 第一次获取连接的时候，就是初始化连接的时候。就会一次性创建initialSize属性所指定的数量的连接
+		System.out.println("=============第1次==============");
+		System.out.println( dataSource.getConnection() );
+		System.out.println(dataSource);
+		System.out.println("=============第2次==============");
+		System.out.println( dataSource.getConnection() );
+		System.out.println(dataSource);
+		System.out.println("=============第3次==============");
+		Connection connection = dataSource.getConnection();
+		System.out.println( connection );
+		System.out.println(dataSource);
+		connection.close();
+		System.out.println("关闭之后再看数据库连接池：" + dataSource);
+		System.out.println("=============第4次==============");
+		System.out.println( dataSource.getConnection() );
+		System.out.println(dataSource);
+	}
+
+
+
+______________________________________________________________________________________________________________________
+
+
+7 数据库工具类的使用
+
+7.1JdbcUtils工具类的实现：
+
+//①创建一个JdbcUtils工具类，并实现以下方法
+
+getConnection();
+
+close();
+
+//②创建一个测试类
+实现查询功能，前提，将表的列名单独封装起来实现一个类
+
+
+___________________________________________________________
+
+
+7.2DBUtils技术的实现
+QueryRunner类
+专门用来执行sql语句
+
+update()
+执行insert、delete、update的sql语句
+
+query()
+执行select 的sql语句
+
+ResultSetHandler接口
+作用：把查询回来的结果转换成为我们需要的数据（类，或集合）
+
+
+=====================
+关于查询时使用到的类
+
+
+BeanHandler类
+将查询回来的resultSet结果集转换成为一个bean对象（适用于select查询语句只返回一行记录。并且这行记录可以转换成为一个javaBean对象）
+
+BeanListHandler类
+将查询回来的resultSet结果集转换成为多个Bean对象实例。并存放到List集合中。（适用于select查询语句只返回多行记录。并且将每行记录可以转换成为一个javaBean对象）
+
+
+============================
+关于其他结果查询时使用到的类
+
+
+ScalarHandler类
+将查询语句返回的结果是单行单列的情况，获取某一列的结果（一般常用于统计的时候）。
+select count(*) from 表名
+
+MapHandler类（扩展）
+将查询返回的结果转换成为map集合（查询回来多个列，但又不需要转换成为javaBean的情况，而且是一行记录）。
+
+MapListHandler类（扩展）
+将查询返回的每一行记录转换为一个map集合（查询回来多个列，但又不需要转换成为javaBean的情况，而且是多行记录）。
+
+
+
+
+
+
+查询的时候，列名与属性名必须一致
+
+
+
+___________________________________________________________
+
+7.3DAO的使用
+
+DAO 是数据访问对象
+D 	data数据
+A 	Access 访问
+O	Object对象
+
+一般情况下。所有的SQL数据操作。都应该写在DAO类的方法中。
+即 DAO用来写SQL语句操作代码的
+
+一个类对应一个表->一个类对应一个Dao类。
+
+一个列对应类中的属性。
+
+一条记录对应一个javaBean对象实例
+
+
+
+
+
+
+____________________________________________________________________________________________________________________________________________________________________________________________________________________________________________
+
+Linux中Mysql数据库mybox1表的创建：
+
+//1 创建表
+
+create table t_user(
+`id` int primary key auto_increment,
+`name` varchar(50),
+`password` varchar(32),
+`sex` varchar(2),
+`birthday` date default '2000-01-01',
+`salary` decimal(11,2)
+);
+
+
+//2 添加数据
+
+insert into t_user(`name`,`password`,`sex`,`salary`) values('zhang1','123456','男',2000);
+insert into t_user(`name`,`password`,`sex`,`salary`) values('zhang2','123456','男',2000);
+insert into t_user(`name`,`password`,`sex`,`salary`) values('zhang3','123456','男',2000);
+insert into t_user(`name`,`password`,`sex`,`salary`) values('zhang4','123456','男',2000);
+insert into t_user(`name`,`password`,`sex`,`salary`) values('zhang5','123456','男',2000);
+insert into t_user(`name`,`password`,`sex`,`salary`) values('zhang6','123456','男',2000);
+
+
+//3 复制一张表
+
+create table t_person select*from t_user;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
